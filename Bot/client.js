@@ -1,30 +1,26 @@
 let Discord = require('discord.js');
 let client = new Discord.Client();
 
-let CONFIG = require('./config.json');
+let CONFIG = require('../config/config.json');
 let HELPERS = require('./helpers.js');
 let ROLES = require('./roles.js');
 
-
-client.on('ready', () => {
-
-	console.log(`Logged in as ${client.user.tag}!`);
-
-})
-
 client.on('message', (msg) => {
+
+	// - Команда
 
 	let cmd = msg.content.substring(CONFIG.prefix.length).split(' ').join(' ');
 
+	// Проверка команды
 
 	switch (cmd) {
 
 		case 'roles':
-			if (!(msg.member.hasPermission('ADMINISTRATOR')))
+			if (!msg.member.hasPermission('ADMINISTRATOR'))
 				return msg.channel.send('Недостаточно прав!');
 
 			if(msg.channel.name !== 'получение-ролей')
-				return
+				return;
 
 			let reactionList = ['🐍', '🐘', '🔖', '🌐', '🟧', '☕', '💻', '🖥️', '💩', '🐦', '📱', '🟣', '💠', '👶'];
 
@@ -45,29 +41,36 @@ client.on('message', (msg) => {
 			.addField(name = 'Design', value = '🟣', true)
 			.addField(name = '3D-шник', value = '💠', true)
 			.addField(name = 'Начинающий', value = '👶', true)
-			.setFooter('Для того что-бы получить роль, нажмите на emoji')
+			.setFooter('Для того что-бы получить роль, нажмите на emoji');
+
+			// сообщение с командой пользователя, удаляется
 
 			msg.delete();
+
+			// выводим в чат embed, и проставляем на нем реакции.
 
 			msg.channel.send(embed).then(embedMessage => {
 				reactionList.reduce((promise, emoji) => promise.then(() => embedMessage.react(emoji)), Promise.resolve());
 			});
 
-			break;
+
+		break;
 	}
 
 });
 
 
 client.on('messageReactionAdd', (reaction, user) => {
+
 	if (user.bot || reaction.message.channel.name !== 'получение-ролей')
 		return;
 
+	// участник который поставил реакцию
+
 	let member = reaction.message.guild.members.find(member => member.id === user.id);
 
-	if (member.roles.size >= 5) {
-
-		return member.send("Вы не можете иметь больше 5 ролей!")
+	if (member.roles.size >= 6) {
+		return member.send("Вы не можете иметь больше 5 ролей!");
 	}
 
 	HELPERS.getRole(reaction, member, ROLES[reaction.emoji.name]);
@@ -76,8 +79,11 @@ client.on('messageReactionAdd', (reaction, user) => {
 });
 
 client.on('messageReactionRemove', (reaction, user) => {
+
 	if (user.bot || reaction.message.channel.name !== 'получение-ролей')
 		return;
+
+	// участник который убрал реакцию
 
 	let member = reaction.message.guild.members.find(member => member.id === user.id);
 
